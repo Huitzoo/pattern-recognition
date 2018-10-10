@@ -1,0 +1,202 @@
+{% extends 'base/plantilla.html' %}
+{% load static  %}
+{% block title %}Estadistico{% endblock %}
+{% block css%}
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+{% endblock %}
+{% block content %}
+    <div class="container">        
+        <div class="row">
+            <h3 class="center light-blue-text text-darken-1">Métricas</h3>
+            <h5 class="center grey-text text-darken-1">Programa de 4 métricas</h5>
+            <a class ="btn indigo darken-3 waves-effect waves-light" href="{% url 'algoritmos:index' %}">
+                <span><i class="material-icons">arrow_back</i></span>
+            </a>
+        </div>
+        <hr>
+        <div class="row">                
+            <div class="col s3">
+                <div class="row">
+                    <label>Ingresa un archivo tipo json con tus clases <br> Se procesará los patrones con las clases</label>
+                </div>
+                <div class="row file-field input-field">
+                    <div name="archivo" class="btn grey darken-3">
+                        <span><i class="material-icons">archive</i></span>
+                        <input id="clases" name="clases" type="file">
+                    </div>
+                    <div class="file-path-wrapper">
+                        <input class="file-path validate" type="text">
+                    </div>
+                </div>
+                <div class="row">
+                </div>
+                <div class="row">
+                    <button class="grey darken-3 btn waves-effect waves-light" id="enviarArchivo">Subir</button>    
+                </div>
+            </div>
+            <div class="col s1"></div>
+            <div class="col" id="respuestas"> 
+                <div class="row">
+                    <div id="canvas-grafica">
+
+                    </div>
+                    <ul class="collapsible">
+                        <li>
+                            <div class="collapsible-header">
+                            <i class="material-icons">view_agenda</i>
+                            Respuesta Euclidea
+                            <span class="badge" id="euclidea_d"></span></div>
+                            <div class="collapsible-body" id="euclidea">
+
+                            </div>
+                        </li>
+                        <li>
+                            <div class="collapsible-header">
+                            <i class="material-icons">phonelink_lock</i>
+                            Respuesta City block
+                            <span class="badge" id="block_d"></span></div>
+                            <div class="collapsible-body" id="block">
+
+                            </div>
+                        </li>
+
+                        <li>
+                            <div class="collapsible-header">
+                            <i class="material-icons">all_inclusive</i>
+                            Respuesta Inifinito
+                            <span class="badge" id="infinito_d"></span></div>
+                            <div class="collapsible-body" id="infinito">
+
+                            </div>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </div>    
+    </div>
+{% endblock %}
+{% block script %}
+    <script>
+        $(document).ready(function(){
+            $('.collapsible').collapsible();
+        });
+    </script>
+    <script>
+    document.addEventListener('DOMContentLoaded', function() {
+        var elems = document.querySelectorAll('.parallax');
+        var option = {
+            'responsiveThreshold':50,
+        }
+        var instances = M.Parallax.init(elems,option);
+    });            
+    </script>
+    <script>
+        $('#enviarArchivo').click(function(){
+            var data = new FormData();
+            data.append('clases',$('#clases').prop('files')[0]);
+            data.append('metrica',$('#metrica').val());
+            nombre = $('#clases').val();
+            if(nombre == ""){
+                swal("¡Espera!", "Porfavor, selecciona un archivo", "warning");
+            }else{
+                extension = nombre.substr((nombre.lastIndexOf('.') + 1));
+                if (extension != "json"){
+                    swal("¡Upss!", "Hubo un error, selecciona otro archivo.", "error");
+                }else{
+                    $.ajax({
+                        headers: { "X-CSRFToken": '{{csrf_token}}' },
+                        url: "{% url 'algoritmos:metricas' %}",
+                        type: "POST",
+                        data: data,
+                        dataType: 'json',
+                        contentType: false,
+                        processData: false,
+                        success: function (response) {
+                            var longitud = response['puntos'].length;
+                            var datasets = [];
+                            var patrones = response['patrones'].length;
+                            var representantes = response['representantes'].length;
+                        
+                            var labels = response['nombre_patrones'];
+                            for(var i=0;i<longitud;i++){
+                                var data = [];
+                                var count = Object.keys(response['puntos'][i]).length;
+                                for(var j = 1; j<= count;j++){
+                                    coord = {x:response['puntos'][i][j][0],y:response['puntos'][i][j][1]};
+                                    data.push(coord);
+                                }
+                                datasets.push({showLine:false,fill:false,label:labels[i],backgroundColor:'rgba(0'+Math.floor(Math.random()*254)+',0'+Math.floor(Math.random()*254)+',0'+Math.floor(Math.random()*254)+', 0.3)',data:data});
+                            }
+                            var data = [];
+                            for(var i=0;i<patrones;i++){
+                                coord = {x:response['patrones'][i][0],y:response['patrones'][i][1]};
+                                data.push(coord);
+                            }
+                            datasets.push({showLine:false,fill:false,label:"patrones",backgroundColor:'rgba(255,52,4,0.6)',data:data});
+                            var data = [];
+                            for(var i=0;i<representantes;i++){
+                                coord = {x:response['representantes'][i][0],y:response['representantes'][i][1]};
+                                data.push(coord);
+                            }
+                            datasets.push({showLine:false,fill:false,label:"representantes",backgroundColor:'rgba(0,0,0,0.6)',data:data});
+                            pintarChart(datasets);
+                            pintarRespuestas(response);
+                        },
+                    });
+                }
+            }
+        });
+        function pintarChart(datasets){
+            $("#canvas-grafica").empty();
+            $("#canvas-grafica").append("<canvas id='canvas' width='550' height='300' class='chartjs-render-monitor'></canvas>");            
+            var ctx = $("#canvas");
+            var scatterChart = new Chart(ctx, {
+                type: 'scatter',
+                data: {
+                    datasets: datasets,
+                },
+                gridLines: {
+                    drawOnChartArea: false, // only want the grid lines for one axis to show up
+                },
+                options: {
+                    scales: {
+                        xAxes: [{
+                            type: 'linear',
+                            position: 'bottom'
+                        }]
+                    }
+                }
+            });   
+        };
+        function pintarRespuestas(response){
+            $("#euclidea").empty();
+            $("#block").empty();
+            $("#infinito").empty();
+            var longitud = response['pertenece_e'].length;
+            $('#euclidea_d').addClass("new badge green");
+            for(var i=0; i < longitud;i++){
+                var j = i+1;
+                $("#euclidea").append("<h5> Tu patrón: "+j+"</h5>");
+                $("#euclidea").append("<h5> Pertenece a la clase: "+response['pertenece_e'][i][1]+"</h5>");
+                $("#euclidea").append("<h5> Con una distancia de: "+response['pertenece_e'][i][0]+"</h5>");   
+            }
+            var longitud = response['pertenece_b'].length;
+            $('#block_d').addClass("new badge green");
+            for(var i=0; i < longitud;i++){
+                var j = i+1;
+                $("#block").append("<h5> Tu patrón: "+j+"</h5>");
+                $("#block").append("<h5> Pertenece a la clase: "+response['pertenece_b'][i][1]+"</h5>");
+                $("#block").append("<h5> Con una distancia de: "+response['pertenece_b'][i][0]+"</h5>");   
+            }
+            var longitud = response['pertenece_i'].length;
+            $('#infinito_d').addClass("new badge green");
+            for(var i=0; i < longitud;i++){
+                var j = i+1;
+                $("#infinito").append("<h5> Tu patrón: "+j+"</h5>");
+                $("#infinito").append("<h5> Pertenece a la clase: "+response['pertenece_i'][i][1]+"</h5>");
+                $("#infinito").append("<h5> Con una distancia de: "+response['pertenece_i'][i][0]+"</h5>");   
+            }
+            
+        }
+    </script>
+{% endblock %}

@@ -1,0 +1,89 @@
+{% extends 'base/plantilla.html' %}
+{% load static  %}
+{% block title %}Estadistico{% endblock %}
+{% block css%}
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+{% endblock %}
+{% block content %}
+    <div class="container">        
+        <div class="row">
+            <h3 class="center light-blue-text text-darken-1">Estadistico</h3>
+            <h5 class="center grey-text text-darken-1">Programa simple</h5>
+            <a class ="btn indigo darken-3 waves-effect waves-light" href="{% url 'algoritmos:index' %}">
+                <span><i class="material-icons">arrow_back</i></span>
+            </a>
+        </div>
+        <hr>
+        <div class="row">                
+            <div class="col s4">
+                <div class="row">
+                    <label>Ingresa un archivo tipo json con tus clases</label>
+                </div>
+                <div class="row file-field input-field">
+                    <div name="archivo" class="btn grey darken-3">
+                        <span><i class="material-icons">archive</i></span>
+                        <input id="clases" name="clases" type="file">
+                    </div>
+                    <div class="file-path-wrapper">
+                        <input class="file-path validate" type="text">
+                    </div>
+                </div>
+                <div class="row">
+                    <button class="grey darken-3 btn waves-effect waves-light" id="enviarArchivo">Subir</button>    
+                </div>
+            </div>
+            <div class="col s1"></div>
+            <div class="col" id="respuestas"> 
+                <div class="row">
+
+                </div>
+            </div>
+        </div>    
+    </div>
+{% endblock %}
+{% block script %}
+    <script>
+    document.addEventListener('DOMContentLoaded', function() {
+        var elems = document.querySelectorAll('.parallax');
+        var option = {
+            'responsiveThreshold':50,
+        }
+        var instances = M.Parallax.init(elems,option);
+    });            
+    </script>
+    <script>
+        $('#enviarArchivo').click(function(){
+            var data = new FormData();
+            data.append('clases',$('#clases').prop('files')[0]);
+            nombre = $('#clases').val();
+            if(nombre == ""){
+                swal("¡Espera!", "Porfavor, selecciona un archivo", "warning");
+            }else{
+                extension = nombre.substr((nombre.lastIndexOf('.') + 1));
+                if (extension != "json"){
+                    swal("¡Upss!", "Hubo un error, por favor elige otro archivo.", "error");
+                }else{
+                    $.ajax({
+                        headers: { "X-CSRFToken": '{{csrf_token}}' },
+                        url: "{% url 'algoritmos:estadistico' %}",
+                        type: "POST",
+                        data: data,
+                        dataType: 'json',
+                        contentType: false,
+                        processData: false,
+                        success: function (response) {
+                            $('#respuestas').append("<h5 class='grey-text text-darken-3'>Metiste "+response['totalClases']+" clases</h5>")
+                            $('#respuestas').append("<h5 class='grey-text text-darken-3'>Con un total de "+response['total']+" muestras</h5>")
+                            $('#respuestas').append("<h5 class='grey-text text-darken-3'>La clase "+response['mayor']+" es la mas probable</h5>")
+                            $('#respuestas').append("<h5 class='grey-text text-darken-3'>Con una probalidad del "+response['mayorP']+"% </h5>")
+                            $('#respuestas').append("<h5 class='grey-text text-darken-3'>Las otras probabilidades son: </h5>");
+                            for(var i = 0 ; i < response['totalClases'];i++){
+                                $('#respuestas').append("<h5 class='grey-text text-darken-3'>"+response['probabilidades'][i]+"% <br></h5>")
+                            }
+                        },
+                    });
+                }
+            }
+        })
+    </script>
+{% endblock %}

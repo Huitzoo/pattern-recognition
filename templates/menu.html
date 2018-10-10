@@ -1,0 +1,35 @@
+{% extends 'base/plantilla.html' %}
+{% load static  %}
+{% block title %}Principal{% endblock %}
+{% block content %}
+    <div class="parallax-container">
+        <div class="parallax">
+            <img class="responsive-img" src="{% static 'img/Imagen1.png' %}" style="transform: translate3d(-50%, 307.841px, 0px); opacity: 1;">
+        </div>
+    </div>
+    <div class="container">        
+        <div class="row">
+            <h3 class="center light-blue-text text-darken-1">Pattern Recognition</h3>
+            <h5 class="center grey-text text-darken-1">Algoritmos Programados</h5>
+        </div>
+        <div class="row">
+            <div class="collection">
+                <h6><a href="{% url 'algoritmos:estadistico' %}" class="blue-grey-text text-darken-3 collection-item">Estadistico</a></h6>
+                <h6><a href="{% url 'algoritmos:bayesSimple' %}"  class="blue-grey-text text-darken-3 collection-item">Bayes Simple</a></h6>
+                <h6><a href="{% url 'algoritmos:euclideano' %}"  class="blue-grey-text text-darken-3 collection-item">Euclideano</a></h6>
+                <h6><a href="{% url 'algoritmos:metricas' %}"  class="blue-grey-text text-darken-3 collection-item">Métricas</a></h6>    
+            </div>
+        </div>    
+    </div>
+{% endblock %}
+{% block script %}
+    <script>
+    document.addEventListener('DOMContentLoaded', function() {
+        var elems = document.querySelectorAll('.parallax');
+        var option = {
+            'responsiveThreshold':50,
+        }
+        var instances = M.Parallax.init(elems,option);
+    });            
+    </script>
+{% endblock %}

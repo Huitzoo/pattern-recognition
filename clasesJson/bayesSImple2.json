@@ -1,0 +1,20 @@
+{
+    "rasgo" : "tamano",
+    "muestra" : 10000,
+    "clases" : {
+        "chayotes" : {
+            "total" : 7000,
+            "tamanos" : [20,200,500,2500,2000,600,500,300,200,180]
+        },
+        "calabacitas" : {
+            "total" : 3000,
+            "tamanos" : [4,4,7,15,120,200,250,700,1300,400]
+        }
+    },
+    "patrones" : {
+        "patron1" : {
+            "tamano" : 7.3,
+            "aleatoria" : 8
+        }
+    }    
+}
