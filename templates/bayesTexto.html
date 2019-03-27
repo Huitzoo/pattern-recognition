@@ -1,0 +1,99 @@
+{% extends 'base/plantilla.html' %}
+{% load static  %}
+{% block title %}Estadistico{% endblock %}
+{% block css%}
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+{% endblock %}
+{% block content %}
+    <div class="container">        
+        <div class="row">
+            <h3 class="center light-blue-text text-darken-1">Bayes Texto</h3>
+            <h5 class="center grey-text text-darken-1">Analizador de texto</h5>
+            <a class ="btn indigo darken-3 waves-effect waves-light" href="{% url 'menu' %}">
+                <span><i class="material-icons">arrow_back</i></span>
+            </a>
+        </div>
+        <hr>
+        <div class="row">     
+            <div class="col s2"></div>           
+            <div class="col s8">
+                <div class="row">
+                    <label>Ingresa una frase<br> Se procesará los patrones con las clases</label>
+                    <br> 
+                    <div class="input-field col s6">
+                        <input placeholder="Placeholder" id="frase" type="text" class="validate">
+                        <label for="frase">Oracion</label>
+                    </div>
+                </div>
+                <div class="row">
+                    <button class="grey darken-3 btn waves-effect waves-light" id="subir">Subir</button>    
+                </div>
+            </div>
+            <div class="col s2"></div>
+        </div>
+        <div class="row">
+            <div class="col s4"></div>
+            <div class="col s4" id="respuestas"></div>
+            <div class="col s4"></div>
+        </div>    
+    </div>
+{% endblock %}
+{% block script %}
+    <script>
+    document.addEventListener('DOMContentLoaded', function() {
+        var elems = document.querySelectorAll('.parallax');
+        var option = {
+            'responsiveThreshold':50,
+        }
+        var instances = M.Parallax.init(elems,option);
+    });            
+    </script>
+    <script>
+        $('#subir').click(function(){
+            if($('#frase').val() == ""){
+                swal("¡Espera!", "Porfavor, ingresa un texto", "warning");
+            }else{
+                var data = new FormData();
+                data.append('frase',$('#frase').val());
+                $.ajax({
+                    headers: { "X-CSRFToken": '{{csrf_token}}' },
+                    url: "{% url 'profundos:bayesTexto' %}",
+                    type: "POST",
+                    data: data,
+                    dataType: 'json',
+                    contentType: false,
+                    processData: false,
+                    success: function (response) {
+                        console.log(response)
+                        $('#respuestas').append("<h5 class='grey-text text-darken-3'>Tienes las clases: "+response['nombre_clases']+" </h5>")
+                        $('#respuestas').append("<h5 class='grey-text text-darken-3'>Metiste los patrones:  "+response['nombre_patrones']+" </h5>")
+                        $('#respuestas').append("<h5 class='grey-text text-darken-3'>El rasgo que medirás es: "+response['rasgo']+"</h5>")
+                        $('#respuestas').append("<h5 class='grey-text text-darken-3'>Tabla de frecuencias</h5>");
+                        $('#respuestas').append("<table class='striped'>");
+                        for(var i = 0; i < response['num_clases']; i++){
+                            $('#respuestas').append("<tr>");
+                            $('#respuestas').append("<td>"+response['nombre_clases'][i]+": </td>");
+                            for(var j = 0 ; j < 10 ;j++){
+                                $('#respuestas').append("<td>"+response['tablaF'][i][j]+"</td>");
+                            }
+                        }
+                        $('#respuestas').append("</tr>");          
+                        $('#respuestas').append("</table>");          
+                        $('#respuestas').append("<h5 class='grey-text text-darken-3'>Tabla de probabilidades</h5>");
+                        $('#respuestas').append("<table class='striped'>");
+                                for(var i = 0; i < response['num_clases']; i++){
+                                    $('#respuestas').append("<tr>");    
+                                    $('#respuestas').append("<td>"+response['nombre_clases'][i]+": </td>");    
+                                    for(var j = 0 ; j < 10 ;j++){
+                                        $('#respuestas').append("<td>"+response['tablaP'][i][j]+"</td>");   
+                                    }
+                                }
+                                $('#respuestas').append("</tr>");          
+                                $('#respuestas').append("</table>");        
+                        $('#respuestas').append("<h5 class='grey-text text-darken-3'>Tu clase pertenece a: "+response['claseP']+" </h5>");  
+                    },
+                });
+            }
+        })
+    </script>
+{% endblock %}

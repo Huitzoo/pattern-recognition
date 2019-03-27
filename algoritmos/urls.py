@@ -4,9 +4,15 @@ from django.urls import path
 
 urlpatterns = [
     path(
-        '',
-        views.index,
-        name='index'
+        'metricas/',
+        view=views.metricas,
+        name='metricas',
+    ),
+     
+    path(
+        'euclideano/',
+        view=views.euclideano,
+        name='euclideano',
     ),
     path(
         'estadistico/',
@@ -17,16 +23,6 @@ urlpatterns = [
         'bayesSimple/',
         view=views.bayesSimple,
         name='bayesSimple',
-    ),
-    path(
-        'metricas/',
-        view=views.metricas,
-        name='metricas',
-    ),
-    path(
-        'euclideano/',
-        view=views.euclideano,
-        name='euclideano',
     ),
     
 ]

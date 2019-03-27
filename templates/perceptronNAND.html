@@ -1,0 +1,92 @@
+{% extends 'base/plantilla.html' %}
+{% load static  %}
+{% block title %}Multiclase{% endblock %}
+{% block css%}
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+{% endblock %}
+{% block content %}
+    <div class="container">        
+        <div class="row">
+            <h3 class="center light-blue-text text-darken-1">Perceptron NAND</h3>
+            <h5 class="center grey-text text-darken-1">Clasificador</h5>
+            <a class ="btn indigo darken-3 waves-effect waves-light" href="{% url 'menu' %}">
+                <span><i class="material-icons">arrow_back</i></span>
+            </a>
+        </div>
+        <hr>
+        <div class="row">                
+            <div class="col s6">
+                <div id="canvas-grafica" class="row">
+
+                </div>
+            </div>
+            <div class="col s6" id="pesos">
+                <h5>W : {{pesos1}},{{pesos2}}<h5>
+            </div>
+        </div>    
+    </div>
+{% endblock %}
+{% block script %}
+
+    <script src="//cdn.datatables.net/1.10.19/js/jquery.dataTables.min.js"></script>
+    <script>
+
+        var pesos = 0;
+        var scatterChart = 0;
+
+        createDatasets();
+        function createDatasets(){
+            var data = []
+            var datasets = []
+            var puntos = {{compuerta|safe}}
+            var x1 = {{x1}}
+            var x2 = {{x2}}
+            var pesos1 = {{pesos1}}
+            var pesos2 = {{pesos2}}
+            var bias = {{bias}}
+            data = []
+            color = 'rgba(0'+Math.floor(Math.random()*254)+',0'+Math.floor(Math.random()*254)+',0'+Math.floor(Math.random()*254)+', 0.5)'
+            var count = Object.keys(puntos).length;
+            for(var i = 0; i < count ;i++){
+                data.push(puntos[i]);
+            }
+            datasets.push({showLine:false,fill:false,label:"puntos",backgroundColor:color,data:data})
+            data = []
+            //plot_y = - 1 / W[1] * (W[0] * plot_x + b) # comes from, w0*x + w1*y + b = 0 then y = (-1/w1) (w0*x + b)
+            color = 'rgba(0,0,0,0.5)';
+
+            for(var i=x1;i<x2;i=i+0.1){
+                y = (-1*(pesos1*i+bias[0])/pesos2);
+                x = i;
+                console.log(x);
+                console.log(y);
+                point = {x:x,y:y}
+                data.push(point)
+            }
+            datasets.push({type:'line',label:"Función",pointRadius: 0,fill:true,backgroundColor:color,data:data})
+            drawChart(datasets);
+        }
+        function drawChart(datasets){
+            $("#canvas-grafica").empty();
+            $("#canvas-grafica").append("<canvas id='canvas' width='800' height='500' class='chartjs-render-monitor'></canvas>");            
+            var ctx = $("#canvas");
+            scatterChart = new Chart(ctx, {
+                type: 'scatter',
+                data: {
+                    datasets: datasets,
+                },
+                gridLines: {
+                    drawOnChartArea: false, // only want the grid lines for one axis to show up
+                },
+                options: {
+                    scales: {
+                        xAxes: [{
+                            type: 'linear',
+                            position: 'bottom'
+                        }]
+                    }
+                }
+            });   
+        }
+    </script>
+{% endblock %}

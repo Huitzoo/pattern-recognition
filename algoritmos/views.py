@@ -5,9 +5,6 @@ import math
 import random
 # Create your views here.
 
-def index(request):
-    return render(request,"menu.html",)
-
 
 def estadistico(request):
     if request.method == 'POST':
@@ -180,4 +177,4 @@ def metricas(request):
 
 def euclideano(request):
     
-    return render(request,"metricas.html")
+    return render(request,"euclideano.html")

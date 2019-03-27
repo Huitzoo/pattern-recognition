@@ -15,9 +15,11 @@ Including another URLconf
 """
 from django.contrib import admin
 from django.urls import path,include
-
+from . import views
 
 urlpatterns = [
     path('admin/', admin.site.urls),
-    path('',include(('algoritmos.urls','algoritmos'),namespace='algoritmos'))
+    path("",views.index , name="menu"),
+    path('basicos/',include(('algoritmos.urls','algoritmos'),namespace='algoritmos')),
+    path('intermedios/',include(('profundos.urls','profundos'),namespace='profundos'))
 ]

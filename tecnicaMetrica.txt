@@ -1,5 +1,0 @@
-1.- Pedir numero de clases
-2.- Descripcion de la clase y su cardinalidad. (nombre y numero de patrones)
-3.- Metemos los vectores que van a pertener a la clase y elegimos el patron que queremos que represente a la clase.
-4.- Metemos un patron y le damos a seleccionar una metrica.
-5.- la otra es opcion solo es para dos clases.

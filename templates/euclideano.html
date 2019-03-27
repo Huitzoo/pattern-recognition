@@ -7,9 +7,9 @@
 {% block content %}
     <div class="container">        
         <div class="row">
-            <h3 class="center light-blue-text text-darken-1">Métricas</h3>
-            <h5 class="center grey-text text-darken-1">Programa de 4 métricas</h5>
-            <a class ="btn indigo darken-3 waves-effect waves-light" href="{% url 'algoritmos:index' %}">
+            <h3 class="center light-blue-text text-darken-1">Euclideano</h3>
+            <h5 class="center grey-text text-darken-1">Algoritmo de clasificación por función discriminante</h5>
+            <a class ="btn indigo darken-3 waves-effect waves-light" href="{% url 'menu' %}">
                 <span><i class="material-icons">arrow_back</i></span>
             </a>
         </div>
@@ -40,36 +40,6 @@
                     <div id="canvas-grafica">
 
                     </div>
-                    <ul class="collapsible">
-                        <li>
-                            <div class="collapsible-header">
-                            <i class="material-icons">view_agenda</i>
-                            Respuesta Euclidea
-                            <span class="badge" id="euclidea_d"></span></div>
-                            <div class="collapsible-body" id="euclidea">
-
-                            </div>
-                        </li>
-                        <li>
-                            <div class="collapsible-header">
-                            <i class="material-icons">phonelink_lock</i>
-                            Respuesta City block
-                            <span class="badge" id="block_d"></span></div>
-                            <div class="collapsible-body" id="block">
-
-                            </div>
-                        </li>
-
-                        <li>
-                            <div class="collapsible-header">
-                            <i class="material-icons">all_inclusive</i>
-                            Respuesta Inifinito
-                            <span class="badge" id="infinito_d"></span></div>
-                            <div class="collapsible-body" id="infinito">
-
-                            </div>
-                        </li>
-                    </ul>
                 </div>
             </div>
         </div>    

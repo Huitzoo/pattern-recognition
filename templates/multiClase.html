@@ -1,0 +1,174 @@
+{% extends 'base/plantilla.html' %}
+{% load static  %}
+{% block title %}Multiclase{% endblock %}
+{% block css%}
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+{% endblock %}
+{% block content %}
+    <div class="container">        
+        <div class="row">
+            <h3 class="center light-blue-text text-darken-1">Multiclase</h3>
+            <h5 class="center grey-text text-darken-1">Clasificador</h5>
+            <a class ="btn indigo darken-3 waves-effect waves-light" href="{% url 'menu' %}">
+                <span><i class="material-icons">arrow_back</i></span>
+            </a>
+        </div>
+        <hr>
+        <div class="row">                
+            <div class="col s3">
+                <div class="row">
+                    <label>Ingresa un archivo tipo json con tus clases <br> Se procesará los patrones con las clases</label>
+                </div>
+                <div class="row file-field input-field">
+                    <div name="archivo" class="btn grey darken-3">
+                        <span><i class="material-icons">archive</i></span>
+                        <input id="clases" name="clases" type="file">
+                    </div>
+                    <div class="file-path-wrapper">
+                        <input class="file-path validate" type="text">
+                    </div>
+                </div>
+                <div class="row">
+                    <button class="grey darken-3 btn waves-effect waves-light" id="enviarArchivo">Subir</button>    
+                </div>
+            </div>
+            <div class="col" id="respuestas"> 
+                <div id="canvas-grafica" class="row">
+
+                </div>
+            </div>
+             <div class="col">
+                <div class="input-field s2">
+                    <input id="x" type="text" class="validate">
+                    <label for="x">X:</label>
+                </div>
+                <div class="input-field s2">
+                    <input id="y" type="text" class="validate">
+                    <label for="y">Y:</label>
+                </div>
+                <div class="row">
+                    <button class="grey darken-3 btn waves-effect waves-light" id="clasifica">Subir</button>    
+                </div>
+            </div>
+        </div>    
+    </div>
+{% endblock %}
+{% block script %}
+
+    <script src="//cdn.datatables.net/1.10.19/js/jquery.dataTables.min.js"></script>
+    <script>
+
+        var pesos = 0;
+        var scatterChart = 0;
+        $('#enviarArchivo').click(function(){
+            
+            nombre = $('#clases').val();
+            if(nombre == ""){
+                swal("¡Espera!", "Porfavor, selecciona un archivo", "warning");
+            }else{
+                extension = nombre.substr((nombre.lastIndexOf('.') + 1));
+                if (extension != "json"){
+                    swal("¡Upss!", "Hubo un error, por favor elige otro archivo.", "error");
+                }else{
+                    var data = new FormData();
+                    data.append('clases',$('#clases').prop('files')[0]);
+                    data.append('training',1);
+                    $.ajax({
+                        headers: { "X-CSRFToken": '{{csrf_token}}' },
+                        url: "{% url 'profundos:multiClase' %}",
+                        type: "POST",
+                        data: data,
+                        dataType: 'json',
+                        contentType: false,
+                        processData: false,
+                        success: function (response) {
+                            pesos = response["weight"];
+                            console.log(pesos);
+                            createDatasets(response)
+                        },
+                    });
+                }
+            }
+        })
+        function createDatasets(response){
+            var data = []
+            var datasets = []
+            for(var j =1 ; j < response['classes']+1;j++){
+                data = []
+                color = 'rgba(0'+Math.floor(Math.random()*254)+',0'+Math.floor(Math.random()*254)+',0'+Math.floor(Math.random()*254)+', 0.5)'
+                var count = Object.keys(response['patterns'][j]).length;
+                for(var i = 0; i < count ;i++){
+                    point = {x:response['patterns'][j][i]['x'],y:response['patterns'][j][i]['y']}
+                    data.push(point)
+                }
+                datasets.push({showLine:false,fill:false,label:"class"+(j),backgroundColor:color,data:data})
+                data = []
+                for(var i=-3 ;i<3;i=i+0.1){
+                    y = (response["weight"][j]["x"]*i)+(response["weight"][j]["u"])/(-1*response["weight"][j]["y"]);
+                    x = i;
+                    point = {x:x,y:y}
+                    data.push(point)
+                }
+                datasets.push({type:'line',label:"fd"+(j),pointRadius: 0,fill:false,backgroundColor:color,data:data})
+            }
+            /*
+            data = []
+            //var info = {label:"areas",data:data_b,type:'bubble',backgroundColor:'rgb(232,232,232,0.4)'}
+            datasets.push({showLine:false,fill:false,label:"classifieds",backgroundColor:color,data:data}) 
+            */
+            //datasets.push(info)           
+            drawChart(datasets);
+        }
+        function drawChart(datasets){
+            $("#canvas-grafica").empty();
+            $("#canvas-grafica").append("<canvas id='canvas' width='800' height='500' class='chartjs-render-monitor'></canvas>");            
+            var ctx = $("#canvas");
+            scatterChart = new Chart(ctx, {
+                type: 'scatter',
+                data: {
+                    datasets: datasets,
+                },
+                gridLines: {
+                    drawOnChartArea: false, // only want the grid lines for one axis to show up
+                },
+                options: {
+                    scales: {
+                        xAxes: [{
+                            type: 'linear',
+                            position: 'bottom'
+                        }]
+                    }
+                }
+            });   
+        }
+
+        $('#clasifica').click(function(){
+            var data = new FormData();
+            data.append('x',$('#x').val());
+            data.append('y',$('#y').val());
+            console.log(pesos);
+
+            data.append('pesos',JSON.stringify(pesos));
+            data.append('training',0);
+            $.ajax({
+                headers: { "X-CSRFToken": '{{csrf_token}}' },
+                url: "{% url 'profundos:biClase' %}",
+                type: "POST",
+                data: data,
+                dataType: 'json',
+                contentType: false,
+                processData: false,
+                success: function (response) {
+                    var label = response['clase']
+                    point = response['point']            
+                    console.log(point)   
+                    addData(response,label-1,point)
+                },
+            });    
+        })
+        function addData(chart,clase, data) {
+            scatterChart.data.datasets[clase].data.push(data)
+            scatterChart.update();
+        }
+    </script>
+{% endblock %}

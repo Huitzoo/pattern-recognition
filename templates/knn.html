@@ -1,0 +1,167 @@
+{% extends 'base/plantilla.html' %}
+{% load static  %}
+{% block title %}Knn{% endblock %}
+{% block css%}
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+    <link href="//cdn.datatables.net/1.10.19/css/jquery.dataTables.min.css">
+{% endblock %}
+{% block content %}
+    <div class="container">        
+        <div class="row">
+            <h3 class="center light-blue-text text-darken-1">Algoritmo Knn</h3>
+            <h5 class="center grey-text text-darken-1"></h5>
+            <a class ="btn indigo darken-3 waves-effect waves-light" href="{% url 'menu' %}">
+                <span><i class="material-icons">arrow_back</i></span>
+            </a>
+        </div>
+        <hr>
+        <div class="row">                
+            <div class="col s3">
+                <div class="row">
+                    <label>Ingresa un archivo tipo json con tus clases <br> Se procesará los patrones con las clases</label>
+                </div>
+                <div class="row file-field input-field">
+                    <div name="archivo" class="btn grey darken-3">
+                        <span><i class="material-icons">archive</i></span>
+                        <input id="clases" name="clases" type="file">
+                    </div>
+                    <div class="file-path-wrapper">
+                        <input class="file-path validate" type="text">
+                    </div>
+                </div>
+                <div class="row">
+                </div>
+                <div class="row">
+                    <button class="grey darken-3 btn waves-effect waves-light" id="enviarArchivo">Subir</button>    
+                </div>
+            </div>
+            <div class="col s1"></div>
+            <div class="col" id="respuestas"> 
+                <div class="row">
+                    <div id="canvas-grafica">
+
+                    </div>
+
+                    <table class="display" id="myTable">
+                        <thead>
+                            <tr>
+                                <th>Patron</th>
+                                <th>x</th>
+                                <th>y</th>
+                                <th>class</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tbody_classes">
+                            
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>    
+    </div>
+{% endblock %}
+{% block script %}
+    <script src="//cdn.datatables.net/1.10.19/js/jquery.dataTables.min.js"></script>
+
+    <script>
+        $('#myTable').hide();
+        $('#enviarArchivo').click(function(){
+            var data = new FormData();
+            data.append('clases',$('#clases').prop('files')[0]);
+            data.append('metrica',$('#metrica').val());
+            nombre = $('#clases').val();
+            if(nombre == ""){
+                swal("¡Espera!", "Porfavor, selecciona un archivo", "warning");
+            }else{
+                extension = nombre.substr((nombre.lastIndexOf('.') + 1));
+                if (extension != "json"){
+                    swal("¡Upss!", "Hubo un error, por favor elige otro archivo.", "error");
+                }else{
+                    $.ajax({
+                        headers: { "X-CSRFToken": '{{csrf_token}}' },
+                        url: "{% url 'profundos:knn' %}",
+                        type: "POST",
+                        data: data,
+                        dataType: 'json',
+                        contentType: false,
+                        processData: false,
+                        success: function (response) {
+                            createDatasets(response)
+                            createTable(response)
+                        },
+                    });
+                }
+            }
+        });
+        function createDatasets(response){
+            var data = []
+            var datasets = []
+            for(var j =0 ; j < response['classes'];j++){
+                data = []
+                color = 'rgba(0'+Math.floor(Math.random()*254)+',0'+Math.floor(Math.random()*254)+',0'+Math.floor(Math.random()*254)+', 0.5)'
+                for(var i = 0; i < response['total'];i++){
+                    if(response['results'][i]['class'] == j+1){
+                        point = {x:response['results'][i]['x'],y:response['results'][i]['y']}
+                        data.push(point)
+                    }
+                }
+                datasets.push({showLine:false,fill:false,label:"class"+(j+1),backgroundColor:color,data:data})
+            }
+            var data = []
+            //var data_b = []
+            var color = 'rgba(0'+Math.floor(0)+',0'+Math.floor(0)+',0'+Math.floor(0)+')';
+            var n = 0;
+            for(var i = response['total']-response['classified']; i< response['total'];i++){
+                point = {x:response['results'][i]['x'],y:response['results'][i]['y']}
+                data.push(point)
+                //data_b.push({x:response['results'][i]['x'],y:response['results'][i]['y'],r:response['distances'][n]['distance']})
+                //n++;
+            }
+            //var info = {label:"areas",data:data_b,type:'bubble',backgroundColor:'rgb(232,232,232,0.4)'}
+            datasets.push({showLine:false,fill:false,label:"classifieds",backgroundColor:color,data:data}) 
+            //datasets.push(info)           
+            drawChart(datasets);
+        }
+        function drawChart(datasets){
+            $("#canvas-grafica").empty();
+            $("#canvas-grafica").append("<canvas id='canvas' width='550' height='300' class='chartjs-render-monitor'></canvas>");            
+            var ctx = $("#canvas");
+            var scatterChart = new Chart(ctx, {
+                type: 'scatter',
+                data: {
+                    datasets: datasets,
+                },
+                gridLines: {
+                    drawOnChartArea: false, // only want the grid lines for one axis to show up
+                },
+                options: {
+                    scales: {
+                        xAxes: [{
+                            type: 'linear',
+                            position: 'bottom'
+                        }]
+                    }
+                }
+            });   
+        }
+        function createTable(response){
+            $('#myTable').show();
+            $("#tbody_classes").empty();
+            var data = []
+            var data_aux =[]
+            for(var i=0; i< response['total'];i++){
+                data_aux = [];
+                data_aux.push((i+1));
+                data_aux.push(response['results'][i]['x']);
+                data_aux.push(response['results'][i]['y']);
+                data_aux.push(response['results'][i]['class']);
+                data.push(data_aux);
+            }
+            $(document).ready( function () {
+                $('#myTable').DataTable({
+                    data:data
+                });
+            });
+        }
+    </script>
+{% endblock %}
